@@ -5,8 +5,8 @@ import (
 )
 
 // very simple puzzle
-// http://www.7sudoku.com/view-puzzle?date=20161117
-
+// https://www.7sudoku.com/view-puzzle?date=20161117
+/*
 var puzzle = [9][9]int{
 	{6, 0, 1, 0, 4, 0, 0, 5, 0},
 	{0, 0, 2, 0, 5, 0, 4, 8, 0},
@@ -17,6 +17,20 @@ var puzzle = [9][9]int{
 	{4, 0, 0, 7, 0, 0, 5, 0, 0},
 	{0, 3, 9, 0, 2, 0, 1, 0, 0},
 	{0, 2, 0, 0, 1, 0, 9, 0, 4}}
+*/
+// moderate puzzle
+// https://www.7sudoku.com/view-puzzle?date=20200703
+
+var puzzle = [9][9]int{
+	{0, 0, 0, 1, 0, 0, 2, 0, 4},
+	{0, 5, 6, 4, 0, 0, 0, 3, 0},
+	{3, 0, 0, 0, 0, 6, 0, 9, 0},
+	{0, 0, 0, 5, 8, 0, 0, 0, 0},
+	{8, 0, 0, 2, 0, 1, 0, 0, 9},
+	{0, 0, 0, 0, 4, 3, 0, 0, 0},
+	{0, 8, 0, 3, 0, 0, 0, 0, 6},
+	{0, 2, 0, 0, 0, 7, 4, 1, 0},
+	{7, 0, 1, 0, 0, 5, 0, 0, 0}}
 
 var puzzlePossibles [9][9][9]bool
 
@@ -24,9 +38,9 @@ func main() {
 	printPuzzle(&puzzle, -1, -1)
 	for {
 		fullEval(&puzzle, &puzzlePossibles)
-		bruteMove := bruteMoves(&puzzle, &puzzlePossibles)
-		fullEval(&puzzle, &puzzlePossibles)
 		deductMove := deductMoves(&puzzle, &puzzlePossibles)
+		fullEval(&puzzle, &puzzlePossibles)
+		bruteMove := bruteMoves(&puzzle, &puzzlePossibles)
 		if !bruteMove && !deductMove {
 			break
 		}
