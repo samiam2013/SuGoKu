@@ -1,0 +1,192 @@
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func mainOld() {
+	startTime := time.Now()
+	var puzzleImpossibles [9][9][9]bool
+
+	/*var puzzle = [9][9]int{ // extremely hard puzzle
+	    {0,0,0,0,3,6,0,5,0},
+	    {3,0,0,0,0,0,4,0,0},
+	    {0,0,5,8,0,1,0,3,0},
+	    {9,0,6,0,0,3,0,0,0},
+	    {0,2,0,0,0,0,0,8,0},
+	    {0,0,0,4,0,0,5,0,6},
+	    {0,1,0,7,0,8,3,0,0},
+	    {0,0,7,0,0,0,0,0,9},
+	    {0,4,0,1,6,0,0,0,0},
+	} //http://www.7sudoku.com/view-solution?date=20161109 */
+
+	var puzzle = [9][9]int{
+		{6, 0, 1, 0, 4, 0, 0, 5, 0},
+		{0, 0, 2, 0, 5, 0, 4, 8, 0},
+		{0, 0, 4, 0, 0, 1, 0, 0, 6},
+		{0, 0, 0, 0, 0, 7, 8, 4, 0},
+		{1, 0, 0, 0, 8, 0, 0, 0, 9},
+		{0, 9, 8, 4, 0, 0, 0, 0, 0},
+		{4, 0, 0, 7, 0, 0, 5, 0, 0},
+		{0, 3, 9, 0, 2, 0, 1, 0, 0},
+		{0, 2, 0, 0, 1, 0, 9, 0, 4},
+	}
+
+	hasZeros := true // the puzzle has zeros at the beginning
+
+	for hasZeros == true { // run until there's no more zeros
+		hasZeros = false // assumption, proven otherwise
+
+		for y := 0; y < 9; y++ {
+			for x := 0; x < 9; x++ {
+
+				//if there's only one possible value, insert it
+				countFalses := 0
+				lastFalse := -1
+				for p := 0; p < 9; p++ {
+					if puzzleImpossibles[y][x][p] == false {
+						countFalses++
+						lastFalse = p + 1
+					}
+				}
+				if countFalses == 1 {
+					puzzle[y][x] = lastFalse
+					fmt.Println("SOLVED [", y, "][", x, "] with brute force for :", lastFalse)
+					printPuzzleOld(&puzzle, y, x)
+				}
+
+				//if it's not 0 flush all the possibilities in row, col, box
+				if puzzle[y][x] == 0 {
+					hasZeros = true //this is how the main loop knows the puzzle isn't solved
+				} else {
+					// flush impossible values
+					placeVal := puzzle[y][x] - 1 // this is the index of the 3rd dimension that changes
+					// for the column y hold x constant and set impossibility
+					for i := 0; i < 9; i++ {
+						puzzleImpossibles[i][x][placeVal] = true
+					}
+					// for the row  hold y constant
+					for i := 0; i < 9; i++ {
+						puzzleImpossibles[y][i][placeVal] = true
+					}
+					//now for the box (2 dimensions)
+					yTop := y - (y % 3)
+					yBottom := yTop + 3
+					xLeft := x - (x % 3)
+					xRight := xLeft + 3
+					for i := yTop; i < yBottom; i++ {
+						for j := xLeft; j < xRight; j++ {
+							puzzleImpossibles[i][j][placeVal] = true
+						}
+					}
+					// set all of the impossibilities true for placed values
+					puzzleImpossibles[y][x] = [9]bool{true, true, true, true, true, true, true, true, true}
+				}
+
+			}
+		}
+		boxCheck(&puzzle, &puzzleImpossibles)
+		rowCheck(&puzzle, &puzzleImpossibles)
+		colCheck(&puzzle, &puzzleImpossibles)
+
+	}
+	endTime := time.Now()
+	duration := endTime.Sub(startTime)
+	fmt.Println("took ", duration.Seconds(), "s to finish")
+	//put code here for printing the solution!
+	printPuzzleOld(&puzzle, -1, -1)
+
+}
+
+func rowCheck(puzzle *[9][9]int, puzzleImpossibles *[9][9][9]bool) {
+	//if there's only one place in a row where a number fits, insert
+	for n := 1; n <= 9; n++ {
+		for i := 0; i < 9; i++ {
+
+			nFalses := 0
+			lastNFalse := -1
+			for j := 0; j < 9; j++ {
+				if puzzleImpossibles[i][j][n-1] == false {
+					nFalses++
+					lastNFalse = j
+				}
+			}
+			if nFalses == 1 {
+				puzzle[i][lastNFalse] = n
+				fmt.Println("SOLVED [", i+1, "][", lastNFalse+1, "] with ROW CHECK for :", n)
+				printPuzzleOld(puzzle, i, lastNFalse)
+			}
+		}
+	}
+}
+
+func colCheck(puzzle *[9][9]int, puzzleImpossibles *[9][9][9]bool) {
+	//if there's only one place in a col where a number fits, insert it
+	for n := 1; n <= 9; n++ {
+		for j := 0; j < 9; j++ {
+			nFalses := 0
+			lastNFalse := -1
+			for i := 0; i < 9; i++ {
+				if puzzleImpossibles[i][j][n-1] == false {
+					nFalses++
+					lastNFalse = i
+				}
+			}
+			if nFalses == 1 {
+				puzzle[lastNFalse][j] = n
+				fmt.Println("SOLVED [", lastNFalse+1, "][", j+1, "] with COL CHECK for :", n)
+				printPuzzleOld(puzzle, lastNFalse, j)
+			}
+		}
+	}
+}
+
+func boxCheck(puzzle *[9][9]int, puzzleImpossibles *[9][9][9]bool) {
+	//if there's only one place in a box where a number fits, insert it.
+	for n := 1; n <= 9; n++ {
+		//fmt.Println("starting box check for number: ",n)
+		for bRow := 0; bRow < 3; bRow++ {
+			for bCol := 0; bCol < 3; bCol++ {
+				nFalses := 0
+				lastNFalse := [2]int{-1, -1}
+				for i := bRow * 3; i < ((bRow * 3) + 3); i++ {
+					for j := bCol * 3; j < ((bCol * 3) + 3); j++ {
+						if puzzleImpossibles[i][j][n-1] == false {
+							nFalses++
+							lastNFalse[0] = i
+							lastNFalse[1] = j
+						}
+					}
+				}
+				if nFalses == 1 {
+					puzzle[lastNFalse[0]][lastNFalse[1]] = n
+					fmt.Println("SOLVED [", lastNFalse[0]+1, "][", lastNFalse[1]+1, "] with BOX CHECK for :", n)
+					printPuzzleOld(puzzle, lastNFalse[0], lastNFalse[1])
+				}
+			}
+		}
+	}
+}
+
+func printPuzzleOld(puzzle *[9][9]int, iHl int, jHl int) {
+	for i := 0; i < 9; i++ {
+		if i%3 == 0 {
+			fmt.Println(" +-------+-------+-------+")
+		}
+		for j := 0; j < 9; j++ {
+			if j%3 == 0 {
+				fmt.Printf(" |")
+			}
+			if (puzzle[i][j] != 0) && ((i != iHl) || (j != jHl)) {
+				fmt.Printf(" %d", puzzle[i][j])
+			} else if (i == iHl) && (j == jHl) {
+				fmt.Printf("\x1b[31;1m %d\x1b[0m", puzzle[i][j])
+			} else {
+				fmt.Printf("  ")
+			}
+		}
+		fmt.Println(" |")
+	}
+	fmt.Println(" +-------+-------+-------+")
+}
